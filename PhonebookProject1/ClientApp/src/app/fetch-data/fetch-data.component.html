@@ -1,0 +1,24 @@
+<h1 id="tableLabel">Phone Book Entries</h1>
+
+<p>This component demonstrates fetching data from the server.</p>
+
+<p *ngIf="!forecasts"><em>Loading...</em></p>
+
+<table class='table table-striped' aria-labelledby="tableLabel" *ngIf="forecasts">
+  <thead>
+    <tr>
+      <th>Id</th>
+      <th>Name </th>
+      <th>Mobile </th>
+      <!--<th>PhoneBook</th>-->
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let forecast of forecasts">
+      <td>{{ forecast.entryId }}</td>
+      <td>{{ forecast.name }}</td>
+      <td>{{ forecast.mobile }}</td>
+      <!--<td>{{ forecast.phonebookId }}</td>-->
+    </tr>
+  </tbody>
+</table>
