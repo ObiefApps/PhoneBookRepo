@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PhonebookProject1.Core.Dtos.Request;
+using PhonebookProject1.Core.Interfaces;
 using PhonebookProject1.Models;
 
 namespace PhonebookProject1.Controllers
@@ -13,112 +15,74 @@ namespace PhonebookProject1.Controllers
     [Route("api/[controller]")]
     public class EntriesController : ControllerBase
     {
-        private readonly DataContext _context;
+        private readonly IEntry _entry;
 
-        public EntriesController(DataContext context)
+        public EntriesController(IEntry entry)
         {
-            _context = context;
+            _entry = entry;
         }
 
         // GET: api/Entries
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Entry>>> GetEntries()
         {
-          if (_context.Entries == null)
+          if (_entry.GetEntriesAsync == null)
           {
-              return NotFound();
+              return NoContent();
           }
-            return await _context.Entries.ToListAsync();
+          var result = await _entry.GetEntriesAsync();  
+            return Ok(result);
         }
 
         // GET: api/Entries/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Entry>> GetEntry(int id)
         {
-          if (_context.Entries == null)
-          {
-              return NotFound();
-          }
-            var entry = await _context.Entries.FindAsync(id);
-
-            if (entry == null)
-            {
-                return NotFound();
-            }
-
-            return entry;
+            var result = await _entry.GetSingleEntry(id);
+            return Ok(result);
         }
 
         // PUT: api/Entries/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutEntry(int id, Entry entry)
+        public async Task<IActionResult> PutEntry(int id, UpdateEntry entry)
         {
-            if (id != entry.EntryId)
+            var result = await _entry.UpdateSingleEntry(entry, id);
+            if (result.Item1 != true)
             {
-                return BadRequest();
+                return BadRequest(result.Item2);
             }
-
-            _context.Entry(entry).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EntryExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
             return NoContent();
         }
 
         // POST: api/Entries
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Entry>> PostEntry(PostEntry pentry)
+        public async Task<ActionResult<Entry>> PostEntry(CreateEntry pentry)
         {
-          if (_context.Entries == null)
-          {
-              return Problem("Entity set 'DataContext.Entries'  is null.");
-          }
-            Entry entry = new Entry { Mobile = pentry.Mobile, Name = pentry.Name, PhoneBookId = 2 };
-            _context.Entries.Add(entry);
-            await _context.SaveChangesAsync();
+           
+                if (pentry == null)
+                {
+                    return NoContent();
+                }
+                var result = await _entry.PostEntryAsync(pentry);
+                if (result.Item1 == false)
+                {
+                    return BadRequest();
+                }
+            return CreatedAtAction("GetEntry", new { id = result.Item2.EntryId }, result.Item2);
 
-            return CreatedAtAction("GetEntry", new { id = entry.EntryId }, entry);
         }
-
         // DELETE: api/Entries/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEntry(int id)
         {
-            if (_context.Entries == null)
+           var result = await _entry.DeleteEntryAsync(id);
+            if (result.Item1 == false)
             {
-                return NotFound();
+                return BadRequest(result.Item2);
             }
-            var entry = await _context.Entries.FindAsync(id);
-            if (entry == null)
-            {
-                return NotFound();
-            }
-
-            _context.Entries.Remove(entry);
-            await _context.SaveChangesAsync();
-
             return NoContent();
-        }
-
-        private bool EntryExists(int id)
-        {
-            return (_context.Entries?.Any(e => e.EntryId == id)).GetValueOrDefault();
         }
     }
 }

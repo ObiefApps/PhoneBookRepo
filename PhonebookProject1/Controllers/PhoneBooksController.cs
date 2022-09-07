@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using PhonebookProject1.Core.Dtos.Request;
+using PhonebookProject1.Core.Interfaces;
 using PhonebookProject1.Models;
 
 namespace PhonebookProject1.Controllers
@@ -13,110 +15,77 @@ namespace PhonebookProject1.Controllers
     [ApiController]
     public class PhoneBooksController : ControllerBase
     {
-        private readonly DataContext _context;
+        private readonly IPhoneBook _phone;
 
-        public PhoneBooksController(DataContext context)
+        public PhoneBooksController(IPhoneBook phone)
         {
-            _context = context;
+            _phone = phone;
         }
 
         // GET: api/PhoneBooks
         [HttpGet]
         public async Task<ActionResult<IEnumerable<PhoneBook>>> GetPhones()
         {
-          if (_context.Phones == null)
-          {
-              return NotFound();
-          }
-            return await _context.Phones.ToListAsync();
+            if (_phone.GetPhonebooksAsync == null)
+            {
+                return NoContent();
+            }
+            var result = await _phone.GetPhonebooksAsync();
+            return Ok(result);
         }
 
         // GET: api/PhoneBooks/5
         [HttpGet("{id}")]
         public async Task<ActionResult<PhoneBook>> GetPhoneBook(int id)
         {
-          if (_context.Phones == null)
-          {
-              return NotFound();
-          }
-            var phoneBook = await _context.Phones.FindAsync(id);
-
+            var phoneBook = await _phone.GetSingleEntry(id);
             if (phoneBook == null)
             {
                 return NotFound();
             }
-            return phoneBook;
+            return Ok(phoneBook);
         }
 
         // PUT: api/PhoneBooks/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutPhoneBook(int id, PhoneBook phoneBook)
+        public async Task<IActionResult> PutPhoneBook(int id, UpdatePhonebook phoneBook)
         {
-            if (id != phoneBook.Id)
+            var result = await _phone.UpdateSingleEntry(phoneBook, id);
+            if (result.Item1 != true)
             {
-                return BadRequest();
+                return BadRequest(result.Item2);
             }
-
-            _context.Entry(phoneBook).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!PhoneBookExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
             return NoContent();
         }
 
         // POST: api/PhoneBooks
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<PhoneBook>> PostPhoneBook(PhoneBook phoneBook)
+        public async Task<ActionResult<PhoneBook>> PostPhoneBook(CreatePhonebook phoneBook)
         {
-          if (_context.Phones == null)
-          {
-              return Problem("Entity set 'DataContext.Phones'  is null.");
-          }
-            _context.Phones.Add(phoneBook);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetPhoneBook", new { id = phoneBook.Id }, phoneBook);
+            if (phoneBook == null)
+            {
+                return NoContent();
+            }
+            var result = await _phone.PostEntryAsync(phoneBook);
+            if (result.Item1 == false)
+            {
+                return BadRequest();
+            }
+            return CreatedAtAction("GetPhoneBook", new { id = result.Item2.Id }, result.Item2);
         }
 
         // DELETE: api/PhoneBooks/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeletePhoneBook(int id)
         {
-            if (_context.Phones == null)
+            var result = await _phone.DeleteEntryAsync(id);
+            if (result.Item1 == false)
             {
-                return NotFound();
+                return BadRequest(result.Item2);
             }
-            var phoneBook = await _context.Phones.FindAsync(id);
-            if (phoneBook == null)
-            {
-                return NotFound();
-            }
-
-            _context.Phones.Remove(phoneBook);
-            await _context.SaveChangesAsync();
-
             return NoContent();
-        }
-
-        private bool PhoneBookExists(int id)
-        {
-            return (_context.Phones?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

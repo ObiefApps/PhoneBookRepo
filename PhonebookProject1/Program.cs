@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using PhonebookProject1.Models;
+using AutoMapper;
+using PhonebookProject1.Core.Interfaces;
+using PhonebookProject1.Services;
 
 namespace PhonebookProject1
 {
@@ -17,8 +20,11 @@ namespace PhonebookProject1
             // Add services to the container.
 
             builder.Services.AddControllersWithViews();
+            builder.Services.AddTransient<IEntry, EntryService>();
+            builder.Services.AddTransient<IPhoneBook, PhonebookService>();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddAutoMapper(typeof(Program));
             builder.Services.AddCors();
 
             builder.Services.AddDbContext<DataContext>(options =>
