@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PhonebookProject1.Core.Dtos.Request;
+using PhonebookProject1.Core.Dtos.Response;
 using PhonebookProject1.Core.Interfaces;
 using PhonebookProject1.Models;
 
@@ -36,7 +37,7 @@ namespace PhonebookProject1.Controllers
 
         // GET: api/Entries/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Entry>> GetEntry(int id)
+        public async Task<ActionResult<EntryResponse>> GetEntry(int id)
         {
             var result = await _entry.GetSingleEntry(id);
             return Ok(result);
